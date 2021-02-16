@@ -59,6 +59,7 @@ SemanticTest::SemanticTest(string const& _filename, langutil::EVMVersion _evmVer
 		{"smoke.test0", simpleSmokeBuiltin},
 		{"smoke.test1", simpleSmokeBuiltin},
 		{"smoke.test2", simpleSmokeBuiltin},
+		{"contract.balance", bind(&SemanticTest::builtinContractBalance, this, _1)},
 	};
 	m_testHooks = {
 		make_shared<SmokeHook>()
@@ -466,4 +467,17 @@ std::optional<bytes> SemanticTest::builtinSmokeTest(FunctionCall const& call)
 			result.value() += util::toBigEndian(u256{util::fromHex(parameter.rawString)});
 	}
 	return result;
+}
+
+std::optional<bytes> SemanticTest::builtinContractBalance(FunctionCall const& call)
+{
+	soltestAssert(call.arguments.parameters.size() <= 1, "");
+	if (call.arguments.parameters.empty())
+		return util::toBigEndian(SolidityExecutionFramework::balanceAt(m_contractAddress));
+	else
+	{
+		h160 address{util::fromHex(call.arguments.parameters.at(0).rawString)};
+		return util::toBigEndian(SolidityExecutionFramework::balanceAt(address));
+	}
+	return std::nullopt;
 }
