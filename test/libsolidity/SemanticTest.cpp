@@ -172,7 +172,7 @@ TestCase::TestResult SemanticTest::runTest(
 	if (_compileViaYul)
 		AnsiColorized(_stream, _formatted, {BOLD, CYAN}) << _linePrefix << "Running via Yul:" << endl;
 
-	for (auto& test: m_tests)
+	for (TestFunctionCall& test: m_tests)
 		test.reset();
 
 	map<string, solidity::test::Address> libraries;
@@ -181,19 +181,19 @@ TestCase::TestResult SemanticTest::runTest(
 
 	// Iterate through the test calls and set the previous call.
 	TestFunctionCall* previousCall{nullptr};
-	for (auto& test: m_tests)
+	for (TestFunctionCall& test: m_tests)
 	{
 		test.setPreviousCall(previousCall);
 		test.setTestHooks(&m_testHooks);
 		previousCall = &test;
 	}
 
-	for (auto& hook: m_testHooks)
+	for (std::shared_ptr<TestHook>& hook: m_testHooks)
 		hook->beginTestCase();
 
-	for (auto& test: m_tests)
+	for (TestFunctionCall& test: m_tests)
 	{
-		for (auto& hook: m_testHooks)
+		for (std::shared_ptr<TestHook>& hook: m_testHooks)
 			hook->beforeFunctionCall(test);
 
 		if (constructed)
@@ -283,8 +283,7 @@ TestCase::TestResult SemanticTest::runTest(
 				boost::split(builtinPath, test.call().expectations.builtin->signature, boost::is_any_of("."));
 				soltestAssert(builtinPath.size() == 2, "");
 				auto builtin = m_builtins[builtinPath.front()][builtinPath.back()];
-				std::optional<bytes> builtinResult = builtin(*test.call().expectations.builtin);
-				if (builtinResult.has_value())
+				if (std::optional<bytes> builtinResult = builtin(*test.call().expectations.builtin))
 					expectationOutput = builtinResult.value();
 				else
 					test.setFailure(true);
@@ -312,7 +311,7 @@ TestCase::TestResult SemanticTest::runTest(
 			test.setContractABI(m_compiler.contractABI(m_compiler.lastContractName()));
 		}
 
-		for (auto& hook: m_testHooks)
+		for (std::shared_ptr<TestHook>& hook: m_testHooks)
 			hook->afterFunctionCall(test);
 	}
 
@@ -321,17 +320,17 @@ TestCase::TestResult SemanticTest::runTest(
 	TestFunctionCall artificialFunctionCall(FunctionCall{});
 	artificialFunctionCall.setTestHooks(&m_testHooks);
 	artificialFunctionCall.setPreviousCall(previousCall);
-	for (auto& hook: m_testHooks)
+	for (std::shared_ptr<TestHook>& hook: m_testHooks)
 	{
 		hook->beforeFunctionCall(artificialFunctionCall);
 		hook->afterFunctionCall(artificialFunctionCall);
 	}
 
-	for (auto& hook: m_testHooks)
+	for (std::shared_ptr<TestHook>& hook: m_testHooks)
 		hook->endTestCase();
 
-	for (auto& test: m_tests)
-		for (auto& hook: m_testHooks)
+	for (TestFunctionCall& test: m_tests)
+		for (std::shared_ptr<TestHook>& hook: m_testHooks)
 			success &= hook->verifyFunctionCall(test);
 
 	if (!m_runWithYul && _compileViaYul)
@@ -349,7 +348,7 @@ TestCase::TestResult SemanticTest::runTest(
 	if (!success && (m_runWithYul || !_compileViaYul))
 	{
 		AnsiColorized(_stream, _formatted, {BOLD, CYAN}) << _linePrefix << "Expected result:" << endl;
-		for (auto const& test: m_tests)
+		for (TestFunctionCall const& test: m_tests)
 		{
 			ErrorReporter errorReporter;
 			_stream << test.format(errorReporter, _linePrefix, false, _formatted) << endl;
@@ -357,7 +356,7 @@ TestCase::TestResult SemanticTest::runTest(
 		}
 		_stream << endl;
 		AnsiColorized(_stream, _formatted, {BOLD, CYAN}) << _linePrefix << "Obtained result:" << endl;
-		for (auto const& test: m_tests)
+		for (TestFunctionCall const& test: m_tests)
 		{
 			ErrorReporter errorReporter;
 			_stream << test.format(errorReporter, _linePrefix, true, _formatted) << endl;
@@ -428,7 +427,7 @@ void SemanticTest::printSource(ostream& _stream, string const& _linePrefix, bool
 
 void SemanticTest::printUpdatedExpectations(ostream& _stream, string const&) const
 {
-	for (auto const& test: m_tests)
+	for (TestFunctionCall const& test: m_tests)
 		_stream << test.format("", true, false) << endl;
 }
 
