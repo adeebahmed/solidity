@@ -60,7 +60,7 @@ public:
 	/// Returns true if deployment was successful, false otherwise.
 	bool deploy(std::string const& _contractName, u256 const& _value, bytes const& _arguments, std::map<std::string, solidity::test::Address> const& _libraries = {});
 
-	void addBuiltin(std::string _module, std::string _function, Builtin _builtin);
+	void addBuiltin(std::string _name, Builtin _builtin);
 
 private:
 	// builtin functions

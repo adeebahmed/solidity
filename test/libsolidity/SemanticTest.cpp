@@ -56,11 +56,9 @@ SemanticTest::SemanticTest(string const& _filename, langutil::EVMVersion _evmVer
 	using namespace placeholders;
 	auto simpleSmokeBuiltin = bind(&SemanticTest::builtinSmokeTest, this, _1);
 	m_builtins = {
-		{"smoke", {
-				{"test0", simpleSmokeBuiltin},
-				{"test1", simpleSmokeBuiltin},
-				{"test2", simpleSmokeBuiltin}
-		}}
+		{"smoke.test0", simpleSmokeBuiltin},
+		{"smoke.test1", simpleSmokeBuiltin},
+		{"smoke.test2", simpleSmokeBuiltin},
 	};
 	m_testHooks = {
 		make_shared<SmokeHook>()
@@ -138,9 +136,9 @@ TestCase::TestResult SemanticTest::run(ostream& _stream, string const& _linePref
 	return result;
 }
 
-void SemanticTest::addBuiltin(string _module, string _function, Builtin _builtin)
+void SemanticTest::addBuiltin(string _name, Builtin _builtin)
 {
-	m_builtins[_module][_function] = _builtin;
+	m_builtins[_name] = _builtin;
 }
 
 TestCase::TestResult SemanticTest::runTest(
@@ -248,10 +246,7 @@ TestCase::TestResult SemanticTest::runTest(
 				output = callLowLevel(test.call().arguments.rawBytes(), test.call().value.value);
 			else if (test.call().kind == FunctionCall::Kind::Builtin)
 			{
-				vector<string> builtinPath;
-				boost::split(builtinPath, test.call().signature, boost::is_any_of("."));
-				soltestAssert(builtinPath.size() == 2, "");
-				auto builtin = m_builtins[builtinPath.front()][builtinPath.back()];
+				auto builtin = m_builtins[test.call().signature];
 				std::optional<bytes> builtinOutput{builtin(test.call())};
 				if (builtinOutput.has_value())
 				{
@@ -279,10 +274,7 @@ TestCase::TestResult SemanticTest::runTest(
 			bytes expectationOutput;
 			if (test.call().expectations.builtin)
 			{
-				vector<string> builtinPath;
-				boost::split(builtinPath, test.call().expectations.builtin->signature, boost::is_any_of("."));
-				soltestAssert(builtinPath.size() == 2, "");
-				auto builtin = m_builtins[builtinPath.front()][builtinPath.back()];
+				auto builtin = m_builtins[test.call().expectations.builtin->signature];
 				if (std::optional<bytes> builtinResult = builtin(*test.call().expectations.builtin))
 					expectationOutput = builtinResult.value();
 				else

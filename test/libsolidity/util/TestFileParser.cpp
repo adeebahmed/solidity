@@ -173,12 +173,8 @@ void TestFileParser::checkBuiltinFunction(std::string const& signature)
 	boost::split(builtinPath, signature, boost::is_any_of("."));
 	assert(builtinPath.size() == 2);
 
-	auto module = m_builtins->find(builtinPath.front());
-	if (module == m_builtins->end())
-		throw TestParserError("builtin module '" + builtinPath.front() + "' not found");
-
-	auto builtin = module->second.find(builtinPath.back());
-	if (builtin == module->second.end())
+	auto builtin = m_builtins->find(signature);
+	if (builtin == m_builtins->end())
 		throw TestParserError(
 			"builtin function '" + builtinPath.back() + "' not found in module '" + builtinPath.front() + "'");
 }
