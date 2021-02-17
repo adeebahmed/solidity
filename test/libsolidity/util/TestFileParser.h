@@ -16,7 +16,6 @@
 
 #include <liblangutil/Exceptions.h>
 #include <libsolutil/CommonData.h>
-#include <test/libsolidity/Builtin.h>
 #include <test/libsolidity/util/SoltestTypes.h>
 
 #include <iosfwd>

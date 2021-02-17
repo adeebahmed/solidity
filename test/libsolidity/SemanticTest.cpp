@@ -12,19 +12,19 @@
 	along with solidity.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <test/libsolidity/SemanticTest.h>
+
+#include <libsolutil/Whiskers.h>
+#include <libyul/Exceptions.h>
+#include <test/Common.h>
+#include <test/libsolidity/util/BytesUtils.h>
+#include <test/libsolidity/hooks/SmokeHook.h>
+#include <test/libsolidity/TestHook.h>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/throw_exception.hpp>
-#include <libsolutil/Whiskers.h>
-#include <libyul/Exceptions.h>
-#include <test/Common.h>
-#include <test/libsolidity/SemanticTest.h>
-#include <test/libsolidity/util/BytesUtils.h>
-
-#include <test/libsolidity/Builtin.h>
-#include <test/libsolidity/TestHook.h>
-#include <test/libsolidity/hooks/SmokeHook.h>
 
 #include <algorithm>
 #include <cctype>
@@ -54,16 +54,13 @@ SemanticTest::SemanticTest(string const& _filename, langutil::EVMVersion _evmVer
 	m_enforceViaYul(enforceViaYul)
 {
 	using namespace placeholders;
-	auto simpleSmokeBuiltin = make_shared<Builtin>(
-		bind(&SemanticTest::builtinSmokeTest, this, _1)
-	);
+	auto simpleSmokeBuiltin = bind(&SemanticTest::builtinSmokeTest, this, _1);
 	m_builtins = {
 		{"smoke", {
 				{"test0", simpleSmokeBuiltin},
 				{"test1", simpleSmokeBuiltin},
 				{"test2", simpleSmokeBuiltin}
-			}
-		}
+		}}
 	};
 	m_testHooks = {
 		make_shared<SmokeHook>()
@@ -141,7 +138,7 @@ TestCase::TestResult SemanticTest::run(ostream& _stream, string const& _linePref
 	return result;
 }
 
-void SemanticTest::addBuiltin(string _module, string _function, std::shared_ptr<Builtin> _builtin)
+void SemanticTest::addBuiltin(string _module, string _function, Builtin _builtin)
 {
 	m_builtins[_module][_function] = _builtin;
 }
@@ -255,7 +252,7 @@ TestCase::TestResult SemanticTest::runTest(
 				boost::split(builtinPath, test.call().signature, boost::is_any_of("."));
 				soltestAssert(builtinPath.size() == 2, "");
 				auto builtin = m_builtins[builtinPath.front()][builtinPath.back()];
-				std::optional<bytes> builtinOutput{builtin->builtin(test.call())};
+				std::optional<bytes> builtinOutput{builtin(test.call())};
 				if (builtinOutput.has_value())
 				{
 					test.setFailure(false);
@@ -286,7 +283,7 @@ TestCase::TestResult SemanticTest::runTest(
 				boost::split(builtinPath, test.call().expectations.builtin->signature, boost::is_any_of("."));
 				soltestAssert(builtinPath.size() == 2, "");
 				auto builtin = m_builtins[builtinPath.front()][builtinPath.back()];
-				std::optional<bytes> builtinResult = builtin->builtin(*test.call().expectations.builtin);
+				std::optional<bytes> builtinResult = builtin(*test.call().expectations.builtin);
 				if (builtinResult.has_value())
 					expectationOutput = builtinResult.value();
 				else

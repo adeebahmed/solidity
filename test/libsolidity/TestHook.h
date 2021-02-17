@@ -14,7 +14,8 @@
 
 #pragma once
 
-#include "Builtin.h"
+#include <test/libsolidity/util/SoltestErrors.h>
+
 #include <memory>
 #include <vector>
 

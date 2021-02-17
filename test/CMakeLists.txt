@@ -58,7 +58,6 @@ set(liblangutil_sources
 detect_stray_source_files("${liblangutil_sources}" "liblangutil/")
 
 set(libsolidity_sources
-    libsolidity/Builtin.h
     libsolidity/TestHook.h
     libsolidity/hooks/SmokeHook.h
     libsolidity/ABIDecoderTests.cpp

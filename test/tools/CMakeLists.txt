@@ -39,7 +39,6 @@ add_executable(isoltest
 	../libyul/YulOptimizerTest.cpp
 	../libyul/YulOptimizerTestCommon.cpp
 	../libyul/YulInterpreterTest.cpp
-	../libsolidity/Builtin.h
 	../libsolidity/TestHook.h
 	../libsolidity/hooks/SmokeHook.h
 )
